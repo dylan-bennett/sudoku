@@ -35,16 +35,21 @@ class Solver:
         Returns:
             bool: True if candidate can be placed, False otherwise.
         """
-        # Gather all cells in the same row, column, and box as `cell`
-        cells_to_check = (
-            self.board.rows[cell.row]
-            + self.board.cols[cell.col]
-            + self.board.boxes[cell.box]
-        )
-        # If any such cell already contains the candidate, this is not valid
-        for cell_to_check in cells_to_check:
-            if cell_to_check.symbol == candidate:
+        # Check row (excluding current cell)
+        for cell_to_check in self.board.rows[cell.row]:
+            if cell_to_check is not cell and cell_to_check.symbol == candidate:
                 return False
+
+        # Check column (excluding current cell)
+        for cell_to_check in self.board.cols[cell.col]:
+            if cell_to_check is not cell and cell_to_check.symbol == candidate:
+                return False
+
+        # Check box (excluding current cell)
+        for cell_to_check in self.board.boxes[cell.box]:
+            if cell_to_check is not cell and cell_to_check.symbol == candidate:
+                return False
+
         return True
 
     def solve_backtrack(self):
@@ -70,7 +75,7 @@ class Solver:
         if num_empty_cells == 0:
             return True
 
-        # Optionally randomize cell order for variety in solution paths
+        # Randomize cell order for variety in solution paths
         random.shuffle(empty_cells)
 
         # Track current position in the list of empty cells
@@ -109,13 +114,11 @@ class Solver:
                     print(self.board.ascii)
                     print(
                         "".join(
-                            [
-                                str(cell.symbol) if cell.symbol else "0"
-                                for cell, _ in empty_cells
-                            ]
+                            str(cell.symbol) if cell.symbol else "0"
+                            for cell, _ in empty_cells
                         )
                     )
-                    os.system("clear")
+                    os.system("cls" if os.name == "nt" else "clear")
                     cell.symbol = None
 
                 # Check Sudoku constraints (row/col/box uniqueness)

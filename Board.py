@@ -61,20 +61,12 @@ class Board:
         size (int): Number of symbols/ size of the grid (board is size x size).
         num_bands (int): Number of ros of boxes (height of boxes).
         num_stacks (int): Number of columns of boxes (width of boxes).
-        cells (list[list[Cell]]): 2D list of Cell objects representing the
-            board grid.
-
-    Class Attributes:
         rows (dict[int, list[Cell]]): Cells grouped by row index.
         cols (dict[int, list[Cell]]): Cells grouped by column index.
         boxes (dict[int, list[Cell]]): Cells grouped by box index.
+        cells (list[list[Cell]]): 2D list of Cell objects representing the
+            board grid.
     """
-
-    # Dictionaries that will hold the Cell objects for each
-    # row, col, and box index
-    rows = {}
-    cols = {}
-    boxes = {}
 
     def __init__(self, symbols=None):
         """
@@ -102,6 +94,12 @@ class Board:
         # Determine the box configuration (bands and stacks)
         self.num_bands, self.num_stacks = closest_factors(self.size)
 
+        # Dictionaries that will hold the Cell objects for each
+        # row, col, and box index
+        self.rows = {}
+        self.cols = {}
+        self.boxes = {}
+
         # Initialize the 2D list of Cell objects
         # and populate row/col/box lookups
         self.cells = []
@@ -116,48 +114,40 @@ class Board:
                     col=col,
                     box=box,
                     symbol=None,
-                    candidates=self.symbols,
+                    candidates=list(self.symbols),
                 )
                 col_cells.append(cell)
 
                 # Add this Cell to each of our lookup dictionaries
-                for d, val in [(self.rows, row), (self.cols, col), (self.boxes, box)]:
-                    if val not in d:
-                        d[val] = []
-                    d[val].append(cell)
+                self.rows.setdefault(row, []).append(cell)
+                self.cols.setdefault(col, []).append(cell)
+                self.boxes.setdefault(box, []).append(cell)
 
             self.cells.append(col_cells)
 
     @property
     def ascii(self):
-        """
-        Returns:
-            str: An ASCII representation of the Sudoku Board, with box borders.
-
-        The grid is displayed with horizontal lines between bands and
-        vertical '|' characters between stacks for easy visual separation of
-        boxes. Each cell shows its symbol (or blank if None).
-        """
-        line = ""
+        lines = []
         for row, row_of_cells in enumerate(self.cells):
-            # Draw the box border above the row, if appropriate
+            # Build border line
+            border_line = []
             for col, cell in enumerate(row_of_cells):
                 if row == 0 or self.cells[row - 1][col].box != cell.box:
-                    line += " -"
+                    border_line.append(" -")
                 else:
-                    line += "  "
-            line += "\n"
+                    border_line.append("  ")
+            lines.append("".join(border_line) + "\n")
 
-            # Draw the row's symbols, with vertical box borders if necessary
+            # Build cell line
+            cell_line = []
             for col, cell in enumerate(row_of_cells):
                 if col == 0 or self.cells[row][col - 1].box != cell.box:
-                    line += f"|{cell}"
+                    cell_line.append(f"|{cell}")
                 else:
-                    line += f" {cell}"
-            line += "|\n"
-        line += " -" * self.size
-
-        return line
+                    cell_line.append(f" {cell}")
+            lines.append("".join(cell_line) + "|\n")
+        lines.append(" -" * self.size)
+        return "".join(lines)
 
     def __str__(self):
         """
