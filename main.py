@@ -10,7 +10,7 @@ def main():
 
     # Solve it in order to fill it out
     solver = Solver(board, DEBUG=DEBUG)
-    solver.solve_backtrack()
+    solver.solve()
 
     print(board.ascii)
 

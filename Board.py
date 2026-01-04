@@ -181,6 +181,24 @@ class Board:
             # Append the completed row to the board's cell grid
             self.cells.append(col_cells)
 
+    def copy(self):
+        """
+        Create a deep copy of the board with all cell symbols duplicated.
+
+        Returns:
+            Board: A new Board instance with identical structure and cell symbols.
+        """
+        # Create a new board with the same configuration
+        # (no initial_state to avoid validation)
+        new_board = Board(symbols=self.symbols, empty_symbol=self.empty_symbol)
+
+        # Copy all cell symbols directly
+        for row_idx, row in enumerate(self.cells):
+            for col_idx, cell in enumerate(row):
+                new_board.cells[row_idx][col_idx].symbol = cell.symbol
+
+        return new_board
+
     def set_initial_state(self, initial_state):
         """
         Set the initial state of the board by assigning symbols to cells.

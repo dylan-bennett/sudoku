@@ -52,6 +52,18 @@ class Solver:
 
         return True
 
+    def solve(self):
+        """
+        Attempts to solve the associated Sudoku board using a backtracking algorithm.
+
+        Returns:
+            bool: True if a solution was found, False otherwise.
+
+        This method delegates the actual solving process to the solve_backtrack
+        method, which performs iterative depth-first search to fill the board.
+        """
+        return self.solve_backtrack()
+
     def solve_backtrack(self):
         """
         Solves the provided Sudoku board using iterative depth-first search
