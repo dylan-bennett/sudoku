@@ -30,7 +30,11 @@ class Cell:
         self.row = row
         self.col = col
         self.box = box
+
+        # The symbol filling the cell
         self.symbol = symbol
+
+        # The list of potential candidates. Only really used when actively solving a board. Otherwise it stays empty.
         self.candidates = candidates
 
     def __repr__(self):
@@ -109,13 +113,8 @@ class Board:
                 # Calculate the box index
                 box = row // self.num_stacks * self.num_stacks + col // self.num_bands
 
-                cell = Cell(
-                    row=row,
-                    col=col,
-                    box=box,
-                    symbol=None,
-                    candidates=list(self.symbols),
-                )
+                # Create a new empty Cell
+                cell = Cell(row=row, col=col, box=box)
                 col_cells.append(cell)
 
                 # Add this Cell to each of our lookup dictionaries
@@ -148,6 +147,9 @@ class Board:
             lines.append("".join(cell_line) + "|\n")
         lines.append(" -" * self.size)
         return "".join(lines)
+
+    def __repr__(self):
+        return self.ascii
 
     def __str__(self):
         """

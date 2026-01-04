@@ -23,6 +23,27 @@ class Solver:
         self.board = board
         self.DEBUG = DEBUG
 
+    def calculate_cell_candidates(self, cell):
+        # Start with a set of all possible candidates
+        possible_candidates = set(self.board.symbols)
+
+        # Go through the cell's row, col, and box and remove all filled cells' symbols from the set
+        for row_cell in self.board.rows[cell.row]:
+            possible_candidates.discard(row_cell.symbol)
+        for col_cell in self.board.cols[cell.col]:
+            possible_candidates.discard(col_cell.symbol)
+        for box_cell in self.board.boxes[cell.box]:
+            possible_candidates.discard(box_cell.symbol)
+
+        # Return the set
+        return possible_candidates
+
+    def calculate_all_empty_cell_candidates(self):
+        for row in self.board.cells:
+            for cell in row:
+                if cell.symbol is None:
+                    cell.candidates = list(self.calculate_cell_candidates(cell))
+
     def is_candidate_valid(self, candidate, cell):
         """
         Checks if the candidate value can be placed at the specified cell
@@ -63,6 +84,9 @@ class Solver:
         The method searches for a solution by filling empty cells with
         candidates, backtracking whenever a dead end is reached.
         """
+        # Calculate the candidates of all of the cells
+        self.calculate_all_empty_cell_candidates()
+
         # Generate a list of all empty cells, each with a mutable candidate index.
         # Structure: [[Cell, candidate_index], ...]
         empty_cells = [
