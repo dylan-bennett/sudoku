@@ -10,13 +10,7 @@ def main():
 
     # Solve it in order to fill it out
     solver = Solver(board, DEBUG=DEBUG)
-    solved = solver.solve_backtrack()
-
-    # If it was properly solved, then all of the cells are filled so all of their candidate lists can be emptied
-    if solved:
-        for row in board.cells:
-            for cell in row:
-                cell.candidates = []
+    solver.solve_backtrack()
 
     print(board.ascii)
 

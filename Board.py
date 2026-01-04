@@ -34,7 +34,8 @@ class Cell:
         # The symbol filling the cell
         self.symbol = symbol
 
-        # The list of potential candidates. Only really used when actively solving a board. Otherwise it stays empty.
+        # The list of potential candidates. Only really used when actively solving a
+        # board. Otherwise it stays empty.
         self.candidates = candidates
 
     def __repr__(self):
@@ -58,74 +59,181 @@ class Cell:
 
 class Board:
     """
-    Represents a Sudoku board with a specified set of symbols.
+    A Sudoku board abstraction supporting arbitrary grids and symbol sets.
+
+    This class organizes a grid of Cell objects and provides access to the
+    board by row, column, and box groupings. It supports flexible symbol sets,
+    customizable empty cell markers, and arbitrary box shapes (for non-9x9 boards).
 
     Attributes:
-        symbols (list[str]): Sorted list of string symbols used on the board.
-        size (int): Number of symbols/ size of the grid (board is size x size).
-        num_bands (int): Number of ros of boxes (height of boxes).
-        num_stacks (int): Number of columns of boxes (width of boxes).
-        rows (dict[int, list[Cell]]): Cells grouped by row index.
-        cols (dict[int, list[Cell]]): Cells grouped by column index.
-        boxes (dict[int, list[Cell]]): Cells grouped by box index.
-        cells (list[list[Cell]]): 2D list of Cell objects representing the
-            board grid.
+        symbols (list[str]): Sorted list of allowed symbols (as strings) for filled
+            cells.
+        size (int): Board dimension (number of rows/columns; board is size x size).
+        num_bands (int): Number of rows per box (height of a Sudoku subgrid).
+        num_stacks (int): Number of columns per box (width of a Sudoku subgrid).
+        rows (dict[int, list[Cell]]): Maps row index to list of Cell objects in that
+            row.
+        cols (dict[int, list[Cell]]): Maps column index to list of Cell objects in that
+            column.
+        boxes (dict[int, list[Cell]]): Maps box index to list of Cell objects in that
+            box.
+        cells (list[list[Cell]]): 2D list of Cell objects: cells[row][col].
+        empty_symbol (str): String symbol used to designate an empty cell.
     """
 
-    def __init__(self, symbols=None):
+    def __init__(self, symbols=None, initial_state=None, empty_symbol="0"):
         """
-        Initializes a Board with the given symbols.
+        Initialize a Sudoku Board instance with a set of possible symbols, an optional
+        initial state, and a specified symbol marking empty cells.
 
         Args:
-            symbols (iterable): Symbols used for the board.
-                Can be numbers or characters.
+            symbols (iterable, optional): The collection of symbols to use for the
+                board's cells. Can be strings or numbers, and will be converted to
+                strings, sorted, and used as the allowed set of board symbols. If not
+                provided, defaults to the integers 1 through 9.
+            initial_state (list or str, optional): Flat sequence of length (size*size)
+                representing initial cell symbols to pre-populate the board. Can include
+                the empty_symbol to denote an empty cell. If None, board is initialized
+                empty.
+            empty_symbol (str, optional): Symbol representing an empty cell
+                (default: "0"). Must not appear in the list of valid symbols.
 
-        The board will be created as a square grid (size x size).
-        The symbols are stringified and sorted. The number of bands (boxes per
-        column) and stacks (boxes per row) are chosen to be as close as
-        possible in size, using closest_factors. Each cell is initialized with
-        all possible candidate symbols.
+        Behavior:
+            - The board is always square (size x size), where size = len(symbols).
+            - The symbols are stored as sorted strings in self.symbols.
+            - The empty_symbol is checked for conflicts in the allowed symbols.
+            - self.size: Number of rows/columns.
+            - self.num_bands, self.num_stacks: Chosen via closest_factors to best
+                factor board size into box shape.
+            - Lookup dictionaries (self.rows, self.cols, self.boxes) allow fast access
+                to all cells in a unit.
+            - Cells are created "empty" (no symbol) initially.
+            - If initial_state is provided, cells are populated accordingly (see
+                set_initial_state).
         """
         if symbols is None:
             symbols = range(1, 10)
 
-        # The list of symbols, stringified and sorted
+        # Store the allowed symbols as a sorted list of strings.
         self.symbols = sorted([str(symbol) for symbol in symbols])
 
-        # The side length of the board
+        # Raise an error if the empty symbol overlaps with any normal board symbol.
+        if empty_symbol in self.symbols:
+            raise ValueError(
+                f"Invalid configuration: The empty symbol '{empty_symbol}' "
+                f"must not appear in the symbols list {self.symbols}."
+            )
+
+        # Store the empty cell placeholder used during initialization and validation.
+        self.empty_symbol = empty_symbol
+
+        # Determine the board size
         self.size = len(self.symbols)
 
-        # Determine the box configuration (bands and stacks)
+        # Compute the box (subgrid) structure for this size
         self.num_bands, self.num_stacks = closest_factors(self.size)
 
-        # Dictionaries that will hold the Cell objects for each
-        # row, col, and box index
+        # Lookup dictionaries to group cells by row, column, and box
         self.rows = {}
         self.cols = {}
         self.boxes = {}
 
-        # Initialize the 2D list of Cell objects
-        # and populate row/col/box lookups
+        # 2D array to hold board cells
         self.cells = []
-        for row in range(self.size):
-            col_cells = []
-            for col in range(self.size):
-                # Calculate the box index
-                box = row // self.num_stacks * self.num_stacks + col // self.num_bands
+        self.initialize_cells()
 
-                # Create a new empty Cell
+        # Populate cells using the initial state, if provided
+        if initial_state:
+            self.set_initial_state(initial_state)
+
+    def initialize_cells(self):
+        """
+        Initializes the internal grid of Cell objects and populates lookup
+        dictionaries for rows, columns, and boxes.
+
+        After execution:
+            - self.cells will be a 2D list of size (size x size), where each entry is a
+                Cell.
+            - self.rows, self.cols, self.boxes will provide direct access to all cells
+                in each group.
+        """
+        for row in range(self.size):
+            col_cells = []  # List to hold the Cell objects for this row
+            for col in range(self.size):
+                # Compute the box index this cell belongs to.
+                # Boxes are arranged in a rectangular grid with num_bands rows and
+                # num_stacks columns.
+                box = (row // self.num_stacks) * self.num_stacks + (
+                    col // self.num_bands
+                )
+
+                # Instantiate a Cell for this position (initially empty, with no symbol
+                # or candidates)
                 cell = Cell(row=row, col=col, box=box)
                 col_cells.append(cell)
 
-                # Add this Cell to each of our lookup dictionaries
+                # Add the cell to the row, column, and box lookup dictionaries.
+                # These provide efficient group access for solving/validating.
                 self.rows.setdefault(row, []).append(cell)
                 self.cols.setdefault(col, []).append(cell)
                 self.boxes.setdefault(box, []).append(cell)
 
+            # Append the completed row to the board's cell grid
             self.cells.append(col_cells)
+
+    def set_initial_state(self, initial_state):
+        """
+        Set the initial state of the board by assigning symbols to cells.
+
+        Args:
+            initial_state (list or str): A flat sequence of symbols of length size*size.
+                Each symbol must be one of the allowed board symbols, or the empty
+                symbol for empty cells.
+
+        Raises:
+            ValueError: If the length of initial_state doesn't match the number of
+                cells, or if any symbol is not a valid board symbol or the empty symbol.
+
+        The function walks through the cells in row-major order and assigns each cell
+        its corresponding symbol from initial_state. Cells corresponding to the empty
+        symbol are left unassigned (remain empty).
+        """
+        # Validate initial_state length for proper board shape
+        if len(initial_state) != self.size * self.size:
+            raise ValueError(
+                f"Initial state must have exactly {self.size * self.size} symbols "
+                f"(got {len(initial_state)})."
+            )
+
+        # Ensure there are no initial symbols other than our list and the empty symbol
+        allowed = set(self.symbols) | {self.empty_symbol}
+        for i, sym in enumerate(initial_state):
+            if sym not in allowed:
+                raise ValueError(
+                    f"Invalid symbol '{sym}' at index {i} in initial_state; "
+                    f"allowed: {self.symbols} or '{self.empty_symbol}' for empty."
+                )
+
+        # Go through each cell and set its symbol to the one in the initial state
+        state_index = 0
+        for row in self.cells:
+            for cell in row:
+                if initial_state[state_index] != self.empty_symbol:
+                    cell.symbol = initial_state[state_index]
+                state_index += 1
 
     @property
     def ascii(self):
+        """
+        Returns:
+            str: An ASCII art representation of the Sudoku board, displaying cell values
+            within box and grid borders to visually distinguish each box boundary and
+            cell.
+
+        The output shows row and column groupings separated by visible lines. Empty
+        cells are displayed using their string representation as defined in the Cell
+        class.
+        """
         lines = []
         for row, row_of_cells in enumerate(self.cells):
             # Build border line
@@ -149,6 +257,11 @@ class Board:
         return "".join(lines)
 
     def __repr__(self):
+        """
+        Returns:
+            str: An ASCII art representation of the board layout,
+            suitable for debugging and developer inspection.
+        """
         return self.ascii
 
     def __str__(self):
@@ -157,9 +270,12 @@ class Board:
             str: The concatenation of all cell symbols in the board,
             reading left-to-right and top-to-bottom.
 
-        Each empty cell is represented by '0'.
+        Each empty cell is represented by the class's empty symbol (default '0').
         """
         return "".join(
-            "".join(f"{cell.symbol if cell.symbol is not None else 0}" for cell in row)
+            "".join(
+                f"{cell.symbol if cell.symbol is not None else self.empty_symbol}"
+                for cell in row
+            )
             for row in self.cells
         )
