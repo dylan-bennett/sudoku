@@ -1,5 +1,55 @@
-from Cell import Cell
 from utils import closest_factors
+
+
+class Cell:
+    """
+    Represents a single cell in a Sudoku grid.
+
+    Attributes:
+        row (int): The row index of the cell.
+        col (int): The column index of the cell.
+        box (int): The box index of the cell.
+        symbol (optional): The value assigned to the cell
+            (e.g., number or letter).
+        candidates (optional): A set or list of candidate symbols that the
+            cell can take.
+    """
+
+    def __init__(self, row, col, box, symbol=None, candidates=None):
+        """
+        Initializes a Cell object.
+
+        Args:
+            row (int): The row index of the cell.
+            col (int): The column index of the cell.
+            box (int): The box index of the cell.
+            symbol (optional): The value assigned to the cell. Default is None.
+            candidates (optional): Candidate symbols for the cell. Default is
+                None.
+        """
+        self.row = row
+        self.col = col
+        self.box = box
+        self.symbol = symbol
+        self.candidates = candidates
+
+    def __repr__(self):
+        """
+        Returns a string representation of the Cell object for debugging.
+
+        Returns:
+            str: A string containing cell attributes.
+        """
+        return f"({self.row},{self.col},{self.box},{self.symbol})"
+
+    def __str__(self):
+        """
+        Returns a user-friendly string representation of the Cell object.
+
+        Returns:
+            str: The symbol in the cell, or a space if the cell is empty.
+        """
+        return f"{self.symbol if self.symbol is not None else ' '}"
 
 
 class Board:
@@ -13,7 +63,18 @@ class Board:
         num_stacks (int): Number of columns of boxes (width of boxes).
         cells (list[list[Cell]]): 2D list of Cell objects representing the
             board grid.
+
+    Class Attributes:
+        rows (dict[int, list[Cell]]): Cells grouped by row index.
+        cols (dict[int, list[Cell]]): Cells grouped by column index.
+        boxes (dict[int, list[Cell]]): Cells grouped by box index.
     """
+
+    # Dictionaries that will hold the Cell objects for each
+    # row, col, and box index
+    rows = {}
+    cols = {}
+    boxes = {}
 
     def __init__(self, symbols):
         """
@@ -38,20 +99,38 @@ class Board:
         # Determine the box configuration (bands and stacks)
         self.num_bands, self.num_stacks = closest_factors(self.size)
 
-        # Create the 2-dimensional list of Cells
-        self.cells = [
-            [
-                Cell(
+        # Initialize the 2D list of Cell objects
+        # and populate row/col/box lookups
+        self.cells = []
+        for row in range(self.size):
+            col_cells = []
+            for col in range(self.size):
+                box = self.get_box_index(row, col)
+                cell = Cell(
                     row=row,
                     col=col,
-                    box=self.get_box_index(row, col),
+                    box=box,
                     symbol=None,
                     candidates=self.symbols,
                 )
-                for col in range(self.size)
-            ]
-            for row in range(self.size)
-        ]
+                col_cells.append(cell)
+
+                # Add this Cell to the corresponding row dictionary
+                if row not in self.rows:
+                    self.rows[row] = []
+                self.rows[row].append(cell)
+
+                # Add this Cell to the corresponding column dictionary
+                if col not in self.cols:
+                    self.cols[col] = []
+                self.cols[col].append(cell)
+
+                # Add this Cell to the corresponding box dictionary
+                if box not in self.boxes:
+                    self.boxes[box] = []
+                self.boxes[box].append(cell)
+
+            self.cells.append(col_cells)
 
     def get_box_index(self, row, col):
         """
