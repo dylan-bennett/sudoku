@@ -105,7 +105,9 @@ class Board:
         for row in range(self.size):
             col_cells = []
             for col in range(self.size):
-                box = self.get_box_index(row, col)
+                # Calculate the box index
+                box = row // self.num_stacks * self.num_stacks + col // self.num_bands
+
                 cell = Cell(
                     row=row,
                     col=col,
@@ -115,38 +117,13 @@ class Board:
                 )
                 col_cells.append(cell)
 
-                # Add this Cell to the corresponding row dictionary
-                if row not in self.rows:
-                    self.rows[row] = []
-                self.rows[row].append(cell)
-
-                # Add this Cell to the corresponding column dictionary
-                if col not in self.cols:
-                    self.cols[col] = []
-                self.cols[col].append(cell)
-
-                # Add this Cell to the corresponding box dictionary
-                if box not in self.boxes:
-                    self.boxes[box] = []
-                self.boxes[box].append(cell)
+                # Add this Cell to each of our lookup dictionaries
+                for d, val in [(self.rows, row), (self.cols, col), (self.boxes, box)]:
+                    if val not in d:
+                        d[val] = []
+                    d[val].append(cell)
 
             self.cells.append(col_cells)
-
-    def get_box_index(self, row, col):
-        """
-        Compute the box index for a cell at (row, col).
-
-        The boxes are ordered left-to-right within a band (horizontal group of
-        boxes), progressing top-to-bottom by bands.
-
-        Args:
-            row (int): The row index of the cell.
-            col (int): The column index of the cell.
-
-        Returns:
-            int: The box index for the given cell.
-        """
-        return row // self.num_stacks * self.num_stacks + col // self.num_bands
 
     def __repr__(self):
         """
