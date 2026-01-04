@@ -76,7 +76,7 @@ class Board:
     cols = {}
     boxes = {}
 
-    def __init__(self, symbols):
+    def __init__(self, symbols=None):
         """
         Initializes a Board with the given symbols.
 
@@ -90,6 +90,9 @@ class Board:
         possible in size, using closest_factors. Each cell is initialized with
         all possible candidate symbols.
         """
+        if symbols is None:
+            symbols = range(1, 10)
+
         # The list of symbols, stringified and sorted
         self.symbols = sorted([str(symbol) for symbol in symbols])
 
@@ -125,7 +128,8 @@ class Board:
 
             self.cells.append(col_cells)
 
-    def __repr__(self):
+    @property
+    def ascii(self):
         """
         Returns:
             str: An ASCII representation of the Sudoku Board, with box borders.
