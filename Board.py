@@ -222,6 +222,57 @@ class Board:
                     cell.symbol = initial_state[state_index]
                 state_index += 1
 
+    def calculate_cell_candidates(self, cell):
+        """
+        Calculate and return the set of all valid candidate symbols for a given cell,
+        based on Sudoku rules.
+
+        Args:
+            cell (Cell): The cell object for which to compute candidates.
+
+        Returns:
+            set: A set of symbols that may be placed in this cell without violating
+                Sudoku rules (no duplicates in the same row, column, or box).
+
+        Method:
+            - Start with all possible board symbols as initial candidates.
+            - Remove any symbols present in the same row, column, or box as the cell.
+            - The remaining symbols are the valid candidates for this cell.
+        """
+        # Start with all symbols as possible candidates
+        possible_candidates = set(self.symbols)
+
+        # Remove any symbol already present in the same row
+        for row_cell in self.rows[cell.row]:
+            possible_candidates.discard(row_cell.symbol)
+
+        # Remove any symbol already present in the same column
+        for col_cell in self.cols[cell.col]:
+            possible_candidates.discard(col_cell.symbol)
+
+        # Remove any symbol already present in the same box
+        for box_cell in self.boxes[cell.box]:
+            possible_candidates.discard(box_cell.symbol)
+
+        # Return the final set of candidates
+        return possible_candidates
+
+    def calculate_all_empty_cell_candidates(self):
+        """
+        For every empty cell on the board (i.e., any cell with symbol == None),
+        compute and assign its list of possible candidates.
+
+        This method updates each empty cell's .candidates attribute with a list
+        of valid symbols -- all values that could legally be placed in that cell
+        according to Sudoku rules (no duplicate values in the same row, column,
+        or box).
+        """
+        for row in self.cells:
+            for cell in row:
+                if cell.symbol is None:
+                    # Populate this empty cell's candidates with valid options
+                    cell.candidates = list(self.calculate_cell_candidates(cell))
+
     @property
     def ascii(self):
         """

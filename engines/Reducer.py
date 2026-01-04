@@ -2,8 +2,6 @@ class Reducer:
     def __init__(self, board):
         self.board = board
 
-
-
     def reduce_cell(self, cell):
         # Get all the candidates for the cell
         possible_candidates = self.calculate_cell_candidates(cell)
