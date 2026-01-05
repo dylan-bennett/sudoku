@@ -1,4 +1,4 @@
-from utils import closest_factors
+from sudoku.utils import closest_factors
 
 
 class Cell:

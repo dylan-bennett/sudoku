@@ -1,5 +1,4 @@
-from Board import Board
-from engines.Solver import Solver
+from sudoku.engines.solver import Solver
 
 
 class Reducer:

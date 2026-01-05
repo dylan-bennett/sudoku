@@ -1,5 +1,5 @@
-from Board import Board
-from engines.Solver import Solver
+from sudoku.board import Board
+from sudoku.engines.solver import Solver
 
 
 def main():
