@@ -232,12 +232,16 @@ class Board:
                     f"allowed: {self.symbols} or '{self.empty_symbol}' for empty."
                 )
 
-        # Go through each cell and set its symbol to the one in the initial state
+        # Go through each cell and set its symbol to the one in the initial state, or
+        # None if it's the empty symbol
         state_index = 0
         for row in self.cells:
             for cell in row:
-                if initial_state[state_index] != self.empty_symbol:
-                    cell.symbol = initial_state[state_index]
+                cell.symbol = (
+                    initial_state[state_index]
+                    if initial_state[state_index] != self.empty_symbol
+                    else None
+                )
                 state_index += 1
 
     def calculate_cell_candidates(self, cell):
