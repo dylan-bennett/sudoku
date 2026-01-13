@@ -1,3 +1,5 @@
+import random
+
 from sudoku.engines.solver import Solver
 
 
@@ -15,6 +17,36 @@ class Reducer:
             board (Board): The Sudoku board to reduce.
         """
         self.board = board
+
+    def reduce_n_cells(self, num_to_reduce):
+        if num_to_reduce == 0:
+            return
+
+        # Get all the filled cells
+        filled_cells = [
+            cell for row in self.board.cells for cell in row if cell.symbol is not None
+        ]
+
+        # If there are no filled cells, then we're done
+        if len(filled_cells) == 0:
+            return
+
+        # Shuffle the filled cells
+        random.shuffle(filled_cells)
+
+        # Keep track of how many cells have been reduced
+        num_cells_reduced = 0
+        for cell in filled_cells:
+            # Attempt to reduce the cell
+            result = self.reduce_cell(cell)
+
+            # Track it if the cell was successfully reduced
+            if result is True:
+                num_cells_reduced += 1
+
+            # If we've reduced the desired number of cells, then we're done
+            if num_cells_reduced >= num_to_reduce:
+                break
 
     def reduce_cell(self, cell):
         """

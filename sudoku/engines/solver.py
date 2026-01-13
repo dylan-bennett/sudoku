@@ -74,7 +74,7 @@ class Solver:
         The method searches for a solution by filling empty cells with
         candidates, backtracking whenever a dead end is reached.
         """
-        # Calculate the candidates of all of the cells
+        # Calculate the candidates of all of the empty cells
         self.board.calculate_all_empty_cell_candidates()
 
         # Generate a list of all empty cells, each with a mutable candidate index.
