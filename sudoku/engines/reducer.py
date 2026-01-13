@@ -35,6 +35,10 @@ class Reducer:
         Returns:
             bool: True if the symbol was removed, False if not.
         """
+        # If the cell is already empty then it cannot be reduced, so return False
+        if cell.symbol is None:
+            return False
+
         # Get all the candidates for the cell
         possible_candidates = self.board.calculate_cell_candidates(cell)
 
