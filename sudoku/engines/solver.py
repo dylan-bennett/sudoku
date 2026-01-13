@@ -85,7 +85,7 @@ class Solver:
 
         num_empty_cells = len(empty_cells)
 
-        # No empty cells = board is already solved
+        # No empty cells => board is already solved
         if num_empty_cells == 0:
             return True
 
