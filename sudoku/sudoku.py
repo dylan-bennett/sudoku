@@ -15,9 +15,10 @@ class Sudoku:
 
         # Attributes of the Sudoku
         self.difficulty = kwargs.get("difficulty", "easy")
-        assert (
-            self.difficulty in self.difficulties_reductions
-        ), f"Difficulty must be one of {[d for d in self.difficulties_reductions.keys()]}"
+        assert self.difficulty in self.difficulties_reductions, (
+            "Difficulty must be one of "
+            f"{[d for d in self.difficulties_reductions.keys()]}"
+        )
 
         self.symbols = kwargs.get("symbols", range(1, 10))
         self.initial_state = kwargs.get("initial_state", None)
