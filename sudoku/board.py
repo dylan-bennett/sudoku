@@ -1,3 +1,5 @@
+import random
+
 from sudoku.utils import closest_factors
 
 
@@ -243,6 +245,54 @@ class Board:
                     else None
                 )
                 state_index += 1
+
+    def seed_empty_board(self):
+        """
+        Take an empty board and fill in some seed cells.
+        This will make solving the board go much faster.
+        """
+        # Verify that the board is empty. If it's not, abort
+        for row in self.cells:
+            for cell in row:
+                if cell.symbol is not None:
+                    return
+
+        # Choose a random column
+        column_index = random.randrange(self.size)
+
+        # Shuffle the symbols
+        symbols = [s for s in self.symbols]
+        random.shuffle(symbols)
+
+        # Place the symbols into all the cells in that column
+        for i, cell in enumerate(self.cols[column_index]):
+            cell.symbol = symbols[i]
+
+        # Choose a random cell within that column
+        cell = random.choice(self.cols[column_index])
+
+        # Get the other cells within our cell's row and box
+        remaining_box_cells = [
+            c for c in self.boxes[cell.box] if c.row == cell.row and c.col != cell.col
+        ]
+
+        # Keep track of the symbols in this row
+        used_symbols = [cell.symbol]
+
+        # For each cell , calculate its candidates and choose a random one
+        for remaining_cell in remaining_box_cells:
+            candidates = list(self.calculate_cell_candidates(remaining_cell))
+            remaining_cell.symbol = random.choice(candidates)
+            used_symbols.append(remaining_cell.symbol)
+
+        # Get the remaining symbols allowed in that row and shuffle them
+        remaining_symbols = [s for s in self.symbols if s not in used_symbols]
+        random.shuffle(remaining_symbols)
+
+        # Go through the rest of the row and seed those cells
+        for cell in self.rows[cell.row]:
+            if cell.symbol is None:
+                cell.symbol = remaining_symbols.pop()
 
     def calculate_cell_candidates(self, cell):
         """
