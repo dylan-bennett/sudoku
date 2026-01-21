@@ -38,6 +38,7 @@ class Sudoku:
             initial_state=self.initial_state,
             empty_symbol=self.empty_symbol,
         )
+        self.solution.seed_empty_board()
         Solver(self.solution).solve()
 
         # Make a copy of the solution board, to become our game board
@@ -51,12 +52,16 @@ class Sudoku:
         # Reduce the game board down until we reach the desired number of filled cells
         Reducer(self.game).reduce_n_cells(num_cells_total - desired_num_filled_cells)
 
-    def __repr__(self):
+    @property
+    def ascii(self):
         return (
             f"Game:\n{self.game.ascii}\n"
             f"{'=' * self.game.size * 2}\n"
             f"Soln:\n{self.solution.ascii}"
         )
+
+    def __repr__(self):
+        return self.ascii
 
     def __str__(self):
         return f"Game: {self.game}\nSoln: {self.solution}"
