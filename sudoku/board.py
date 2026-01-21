@@ -248,51 +248,73 @@ class Board:
 
     def seed_empty_board(self):
         """
-        Take an empty board and fill in some seed cells.
-        This will make solving the board go much faster.
+        Efficiently seed an empty Sudoku board by filling in a subset of cells to
+        speed up generation or solving.
+
+        The seeding process works as follows:
+            1. Randomly select a column, and fill each cell in that column with a
+                unique symbol from the board's symbol set (symbols are shuffled first).
+            2. Pick a random cell in that seeded column to serve as a 'pivot' cell.
+            3. Within the pivot cell's box, fill all the empty cells using a shuffled
+                list of valid candidates for that box. Since only the column is filled,
+                all these empty cells share the same candidate set.
+            4. In the pivot cell's row, outside of its box, fill each remaining empty
+                cell with a unique symbol not already used in the row (symbols are
+                shuffled before assignment).
+
+        This method ensures a minimal set of fixed cells is filled while maintaining
+        the validity of Sudoku constraints, increasing the likelihood that the puzzle
+        is still solvable, and helping downstream generation algorithms proceed faster.
+
+        The function does nothing unless the board is empty (i.e., no cells are filled).
         """
         # Verify that the board is empty. If it's not, abort
-        for row in self.cells:
-            for cell in row:
-                if cell.symbol is not None:
-                    return
+        if any(cell.symbol is not None for row in self.cells for cell in row):
+            return
 
         # Choose a random column
         column_index = random.randrange(self.size)
 
         # Shuffle the symbols
-        symbols = [s for s in self.symbols]
-        random.shuffle(symbols)
+        column_candidates = self.symbols.copy()
+        random.shuffle(column_candidates)
 
         # Place the symbols into all the cells in that column
-        for i, cell in enumerate(self.cols[column_index]):
-            cell.symbol = symbols[i]
+        for cell in self.cols[column_index]:
+            cell.symbol = column_candidates.pop()
 
         # Choose a random cell within that column
-        cell = random.choice(self.cols[column_index])
+        pivot_cell = random.choice(self.cols[column_index])
 
-        # Get the other cells within our cell's row and box
-        remaining_box_cells = [
-            c for c in self.boxes[cell.box] if c.row == cell.row and c.col != cell.col
-        ]
-
-        # Keep track of the symbols in this row
-        used_symbols = [cell.symbol]
-
-        # For each cell , calculate its candidates and choose a random one
-        for remaining_cell in remaining_box_cells:
-            candidates = list(self.calculate_cell_candidates(remaining_cell))
-            remaining_cell.symbol = random.choice(candidates)
-            used_symbols.append(remaining_cell.symbol)
-
-        # Get the remaining symbols allowed in that row and shuffle them
-        remaining_symbols = [s for s in self.symbols if s not in used_symbols]
-        random.shuffle(remaining_symbols)
-
-        # Go through the rest of the row and seed those cells
-        for cell in self.rows[cell.row]:
+        # Seed the empty cells within that cell's box, since they will all
+        # have the same candidates.
+        # In the meantime, keep track of the symbols for the cells in the
+        # same row as our seed cell.
+        used_row_symbols = {pivot_cell.symbol}
+        box_candidates = None
+        for cell in self.boxes[pivot_cell.box]:
             if cell.symbol is None:
-                cell.symbol = remaining_symbols.pop()
+                # We need to fill the box candidates via the first empty cell we find
+                if box_candidates is None:
+                    box_candidates = list(self.calculate_cell_candidates(cell))
+                    random.shuffle(box_candidates)
+                cell.symbol = box_candidates.pop()
+
+                # If it's in the same row as our seed cell,
+                # then keep track of its symbol
+                if cell.row == pivot_cell.row:
+                    used_row_symbols.add(cell.symbol)
+
+        # Get the remaining symbols for that cell's row's empty cells
+        row_candidates = [
+            symbol for symbol in self.symbols if symbol not in used_row_symbols
+        ]
+        random.shuffle(row_candidates)
+
+        # Finally, seed the empty cells in the row
+        for cell in self.rows[pivot_cell.row]:
+            if cell.symbol is None:
+                cell.symbol = row_candidates.pop()
 
     def calculate_cell_candidates(self, cell):
         """

@@ -5,10 +5,9 @@ from sudoku.engines.solver import Solver
 def main():
     DEBUG = False
 
-    # Create our empty board
-    board = Board(range(1, 7))
+    board = Board()
+    board.seed_empty_board()
 
-    # Solve it in order to fill it out
     solver = Solver(board, DEBUG=DEBUG)
     solver.solve()
 

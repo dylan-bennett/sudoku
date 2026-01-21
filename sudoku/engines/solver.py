@@ -23,6 +23,8 @@ class Solver:
         self.board = board
         self.DEBUG = DEBUG
 
+        self.board_copy = self.board.copy()
+
     def is_candidate_valid(self, candidate, cell):
         """
         Checks if the candidate value can be placed at the specified cell
@@ -126,12 +128,14 @@ class Solver:
                 if self.DEBUG:
                     cell.symbol = candidate
                     print(self.board.ascii)
-                    print(
-                        "".join(
-                            str(cell.symbol) if cell.symbol else "0"
-                            for cell, _ in empty_cells
-                        )
-                    )
+                    # print(
+                    #     "".join(
+                    #         str(cell.symbol) if cell.symbol else "0"
+                    #         for cell, _ in empty_cells
+                    #     )
+                    # )
+                    print(self.board)
+                    print(self.board_copy)
                     os.system("cls" if os.name == "nt" else "clear")
                     cell.symbol = None
 
