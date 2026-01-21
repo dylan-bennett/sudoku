@@ -209,7 +209,7 @@ See [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
-I want to give a huge shout out to [Sudoku Wiki by Andrew Stuart](https://www.sudokuwiki.org/Sudoku.htm). His site conains a wealth of information about Sudoku, and especially about solving algorithms.
+I want to give a huge shout out to [Sudoku Wiki by Andrew Stuart](https://www.sudokuwiki.org/Sudoku.htm). His site contains a wealth of information about Sudoku, especially the solving algorithms.
 
 ## Contributing
 
